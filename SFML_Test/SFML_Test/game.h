@@ -12,6 +12,7 @@
 #include <SFML/Network.hpp>
 
 #define MENU_TEXT_OBJECTS 4
+#define HOME_TEXT_OBJECTS 3
 
 /*
 	Class that acts as the game engine.
@@ -41,8 +42,9 @@ private:
 	sf::Text uiText;
 
 	//Game logic
-	bool endGame;
+	bool closeGame;
 	bool paused;
+	bool gameRunning;
 
 	unsigned points;
 	int health;
@@ -59,7 +61,12 @@ private:
 	int menuHeight;
 	int menuWidth;
 
+	int homeHeight;
+	int homeWidth;
+
 	int menuIndexObject;
+
+	int homeIndexObject;
 
 	//Game objects
 	std::vector<sf::RectangleShape> enemies;
@@ -69,10 +76,14 @@ private:
 	sf::RectangleShape menuBox;
 	sf::Text menuText[MENU_TEXT_OBJECTS];
 
+	sf::RectangleShape homeBox;
+	sf::Text homeText[HOME_TEXT_OBJECTS];
+
 	//Private functions
 	void initVariables();
 	void initWindow();
 	void initFonts();
+	void initHomeScreen();
 	void initGameVaribles();
 	void initMenu();
 	void initText();
@@ -88,7 +99,7 @@ public:
 	const bool running() const;
 
 	// Is the game over?
-	const bool getEndGame() const;
+	const bool getCloseGame() const;
 
 	// Restrt the g.
 	void restartGame();
@@ -102,11 +113,16 @@ public:
 	// Get mouse position.
 	void updateMousePositions();
 
+	// Home up and down arrows.
+	void homeUp();
+	void homeDown();
+
 	// Menu up and down arrows.
 	void menuUp();
 	void menuDown();
 
 	// Update drawings.
+	void updateHomeScreen();
 	void updateMenu();
 	unsigned int getFPS();
 	void updateText();
@@ -114,6 +130,7 @@ public:
 	void update();
 
 	// Render objects.
+	void renderHomeScreen(sf::RenderTarget& target);
 	void renderMenu(sf::RenderTarget& target);
 	void renderText(sf::RenderTarget& target);
 	void renderEnemies(sf::RenderTarget& target);

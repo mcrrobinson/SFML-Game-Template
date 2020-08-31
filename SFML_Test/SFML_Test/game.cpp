@@ -7,18 +7,11 @@ void Game::initVariables()
 	this->window = nullptr;
 
 	// Game logic
-	this->endGame = false;
+	this->closeGame = false;
 	this->dead = false;
 	this->paused = false;
 	this->menuIndexObject = 0;
-	
-	// Change Objects.
-	this->points = 0;
-	this->health = 10;
-	this->maxEnemies = 5;
-	this->enemySpawnTimerMax = 20.f;
-	this->enemySpawnTimer = this->enemySpawnTimerMax;
-	this->mouseHeld = false;
+	this->gameRunning = false;
 
 	// Background
 	this->bgRed = 25;
@@ -31,11 +24,13 @@ void Game::initWindow()
 	this->menuHeight = 800;
 	this->menuWidth = 1400;
 
+	this->homeHeight = 800;
+	this->homeWidth = 1400;
+
 	this->videoMode.height = 1080;
 	this->videoMode.width = 1920;
 
 	this->window = new sf::RenderWindow(this->videoMode, "Game 1", sf::Style::Titlebar | sf::Style::Close | sf::Style::Fullscreen);
-
 	this->window->setFramerateLimit(144);
 }
 
@@ -47,9 +42,37 @@ void Game::initFonts()
 	}
 }
 
+void Game::initHomeScreen()
+{
+	this->homeBox.setPosition(static_cast<float>((this->videoMode.width / 2) - (this->homeWidth / 2)), static_cast<float>((this->videoMode.height / 2) - (this->homeHeight / 2)));
+	this->homeBox.setSize(sf::Vector2f(static_cast<float>(this->homeWidth), static_cast<float>(this->homeHeight)));
+	this->homeBox.setFillColor(sf::Color(255, 150, 150));
+
+	this->homeText[0].setFont(this->font);
+	this->homeText[0].setCharacterSize(42);
+	this->homeText[0].setFillColor(sf::Color(255, 0, 0));
+	this->homeText[0].setString("NONE");
+
+	this->homeText[1].setFont(this->font);
+	this->homeText[1].setCharacterSize(42);
+	this->homeText[1].setFillColor(sf::Color(255, 255, 255));
+	this->homeText[1].setString("NONE");
+
+	this->homeText[2].setFont(this->font);
+	this->homeText[2].setCharacterSize(42);
+	this->homeText[2].setFillColor(sf::Color(255, 255, 255));
+	this->homeText[2].setString("NONE");
+}
+
 void Game::initGameVaribles()
 {
-
+	// Change Objects.
+	this->points = 0;
+	this->health = 10;
+	this->maxEnemies = 5;
+	this->enemySpawnTimerMax = 20.f;
+	this->enemySpawnTimer = this->enemySpawnTimerMax;
+	this->mouseHeld = false;
 }
 
 void Game::initMenu()
@@ -100,6 +123,7 @@ Game::Game()
 	this->initVariables();
 	this->initWindow();
 	this->initFonts();
+	this->initGameVaribles();
 	this->initMenu();
 	this->initText();
 	this->initEnemies();
@@ -116,14 +140,14 @@ const bool Game::running() const
 	return this->window->isOpen();
 }
 
-const bool Game::getEndGame() const
+const bool Game::getCloseGame() const
 {
-	return this->endGame;
+	return this->closeGame;
 }
 
 void Game::restartGame()
 {
-	this->endGame = false;
+	this->closeGame = false;
 	this->points = 0;
 	this->health = 100;
 	this->enemies.clear();
@@ -203,58 +227,88 @@ void Game::pollEvents()
 			// - Escape opens pause box.
 			if (this->ev.key.code == sf::Keyboard::Space)
 				this->window->close();
-			if (this->ev.key.code == sf::Keyboard::Escape)
-			{
-				if (!paused)
-				{
-					this->bgRed = 50;
-					this->bgGreen = 50;
-					this->bgBlue = 50;
-					this->paused = true;
-				}
-				else 
-				{
-					this->bgRed = 25;
-					this->bgGreen = 25;
-					this->bgBlue = 25;
-					this->paused = false;
-				}
-			}
 
-			// Key Presses only appropriate on pause.
-			if (paused)
+			if (this->gameRunning)
 			{
-				switch (this->ev.key.code)
+				if (this->ev.key.code == sf::Keyboard::Escape)
 				{
-				case sf::Keyboard::Up:
-					this->menuUp();
-					break;
-				case sf::Keyboard::Down:
-					this->menuDown();
-					break;
-				case sf::Keyboard::Return:
-					if (this->menuIndexObject == 0)
+					if (!paused)
+					{
+						this->bgRed = 50;
+						this->bgGreen = 50;
+						this->bgBlue = 50;
+						this->paused = true;
+					}
+					else
 					{
 						this->bgRed = 25;
 						this->bgGreen = 25;
 						this->bgBlue = 25;
 						this->paused = false;
 					}
-					if (this->menuIndexObject == 1)
-					{
-						this->restartGame();
-					}
-					if (this->menuIndexObject == 2)
-					{
+				}
 
-					}
-					if (this->menuIndexObject == 3)
+				// Key Presses only appropriate on pause.
+				if (paused)
+				{
+					switch (this->ev.key.code)
 					{
-						this->endGame = true;
+					case sf::Keyboard::Up:
+						this->menuUp();
+						break;
+					case sf::Keyboard::Down:
+						this->menuDown();
+						break;
+					case sf::Keyboard::Return:
+						if (this->menuIndexObject == 0)
+						{
+							this->bgRed = 25;
+							this->bgGreen = 25;
+							this->bgBlue = 25;
+							this->paused = false;
+						}
+						if (this->menuIndexObject == 1)
+						{
+							this->restartGame();
+						}
+						if (this->menuIndexObject == 2)
+						{
+							this->restartGame();
+							this->gameRunning = false;
+						}
+						if (this->menuIndexObject == 3)
+						{
+							this->closeGame = true;
+						}
+					}
+				}
+				break;
+			}
+			else
+			{
+				switch (this->ev.key.code)
+				{
+				case sf::Keyboard::Up:
+					this->homeUp();
+					break;
+				case sf::Keyboard::Down:
+					this->homeDown();
+					break;
+				case sf::Keyboard::Return:
+					if (this->homeIndexObject == 0)
+					{
+						this->gameRunning = true;
+					}
+					if (this->homeIndexObject == 1)
+					{
+						std::cout << "Options" << std::endl;
+					}
+					if (this->homeIndexObject == 2)
+					{
+						this->closeGame = true;
 					}
 				}
 			}
-			break;
 		}
 	}
 }
@@ -270,6 +324,26 @@ void Game::updateMousePositions()
 
 	this->mousePosWindow = sf::Mouse::getPosition(*this->window);
 	this->mousePosView = this->window->mapPixelToCoords(this->mousePosWindow);
+}
+
+void Game::homeUp()
+{
+	if (this->homeIndexObject - 1 >= 0)
+	{
+		this->homeText[this->homeIndexObject].setFillColor(sf::Color(255, 255, 255));
+		this->homeIndexObject--;
+		this->homeText[this->homeIndexObject].setFillColor(sf::Color(255, 0, 0));
+	}
+}
+
+void Game::homeDown()
+{
+	if (this->homeIndexObject + 1 < HOME_TEXT_OBJECTS)
+	{
+		this->homeText[this->homeIndexObject].setFillColor(sf::Color(255, 255, 255));
+		this->homeIndexObject++;
+		this->homeText[this->homeIndexObject].setFillColor(sf::Color(255, 0, 0));
+	}
 }
 
 void Game::menuUp()
@@ -290,6 +364,25 @@ void Game::menuDown()
 		this->menuIndexObject++;
 		this->menuText[this->menuIndexObject].setFillColor(sf::Color(255, 0, 0));
 	}
+}
+
+void Game::updateHomeScreen()
+{
+	this->homeBox.setPosition(static_cast<float>((this->videoMode.width / 2) - (this->homeWidth / 2)), static_cast<float>((this->videoMode.height / 2) - (this->homeHeight / 2)));
+	this->homeBox.setSize(sf::Vector2f(static_cast<float>(this->homeWidth), static_cast<float>(this->homeHeight)));
+	this->homeBox.setFillColor(sf::Color(255, 150, 150));
+
+	this->homeText[0].setFont(this->font);
+	this->homeText[0].setString("Start Game");
+	this->homeText[0].setPosition(static_cast<float>((this->videoMode.width / 2) - (this->homeWidth / 2)), static_cast<float>(((this->homeHeight) / HOME_TEXT_OBJECTS) * 1));
+
+	this->homeText[1].setFont(this->font);
+	this->homeText[1].setString("Options");
+	this->homeText[1].setPosition(static_cast<float>((this->videoMode.width / 2) - (this->homeWidth / 2)), static_cast<float>(((this->homeHeight) / HOME_TEXT_OBJECTS) * 2));
+
+	this->homeText[2].setFont(this->font);
+	this->homeText[2].setString("Exit");
+	this->homeText[2].setPosition(static_cast<float>((this->videoMode.width / 2) - (this->homeWidth / 2)), static_cast<float>(((this->homeHeight) / HOME_TEXT_OBJECTS) * 3));
 }
 
 void Game::updateMenu()
@@ -416,24 +509,40 @@ void Game::update()
 {
 	this->pollEvents();
 
-	if (this->endGame == false)
+	if (this->gameRunning)
 	{
-		this->updateMousePositions();
-		this->updateText();
-		if (!(this->dead || this->paused))
+		if (this->closeGame == false)
 		{
-			this->updateEnemies();
+			this->updateMousePositions();
+			if (!(this->dead || this->paused))
+			{
+				this->updateEnemies();
+			}
+			if (this->paused)
+			{
+				this->updateMenu();
+			}
 		}
-		if (this->paused)
+
+		//End game condition
+		if (this->health <= 0)
 		{
-			this->updateMenu();
+			this->dead = true;
 		}
 	}
-
-	//End game condition
-	if (this->health <= 0)
+	else 
 	{
-		this->dead = true;
+		this->updateHomeScreen();
+	}
+	this->updateText();
+}
+
+void Game::renderHomeScreen(sf::RenderTarget& target)
+{
+	target.draw(this->homeBox);
+	for (size_t i = 0; i < HOME_TEXT_OBJECTS; i++)
+	{
+		target.draw(this->homeText[i]);
 	}
 }
 
@@ -475,13 +584,19 @@ void Game::render()
 	this->window->clear(sf::Color(this->bgRed,this->bgGreen,this->bgBlue));
 
 	//Draw game objects
-	if (!this->dead)
+	if (this->gameRunning)
 	{
-		this->renderEnemies(*this->window);
+		if (!this->dead)
+		{
+			this->renderEnemies(*this->window);
+		}
+		if (this->paused)
+		{
+			this->renderMenu(*this->window);
+		}
 	}
-	if (this->paused)
-	{
-		this->renderMenu(*this->window);
+	else {
+		this->renderHomeScreen(*this->window);
 	}
 	this->renderText(*this->window);
 	this->window->display();
